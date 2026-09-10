@@ -6,7 +6,7 @@ library(dplyr)
 # Uses the Rcpp package
 require(Rcpp)
 # Compiles the C++ file for the Markov loop
-Rcpp::sourceCpp("HIPPY/HIPPY/code/rcpp_loop_full.cpp")
+Rcpp::sourceCpp("code/rcpp_loop_full.cpp")
 
 generate_net_benefit <- function(input_parameters, treatment_names = treatment_names, 
                                  state_names = state_names,
@@ -25,6 +25,7 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
   transition_matrices <- generate_transition_matrices(input_parameters,
                                                       treatment_names = treatment_names, 
                                                       state_names = state_names,
+                                                      ini_age = ini_age,
                                                       final_age = final_age,
                                                       starting_age = starting_age,
                                                       gender = gender,
@@ -49,26 +50,28 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
   state_costs[is.na(state_costs)] <- 0
   state_qalys[is.na(state_qalys)] <- 0
   
- 
-  #mortality <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "mortality")
-  # Implant costs (transpose to keep convention of n_implants, n_samples)
-  #implant_costs <- t(input_parameters[, grepl("implant_cost", colnames(input_parameters))])
-  #rownames(implant_costs) <- treatment_names
+  ###Primary mortality
+  mortality <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "primary_mortality")
+  row_index <- which(
+    mortality$age == ini_age &
+      mortality$gender == gender
+  )
+  
+  log_rate_primary_mortality <- rnorm(
+    n_samples,
+    mean = mortality$log_cons_1000_PYS[row_index],
+    sd = mortality$log_cons_SE[row_index]
+  )
+  
+  rate_primary <- exp(log_rate_primary_mortality) / 1000
+  primary_death_prob <- 1 - exp(-rate_primary * 1)
+  
+  ###Primary costs
   primary_costs <- array(dim = c(n_samples, n_treatments), 
                          dimnames = list(NULL, treatment_names))
-  for(i_treatment in 1:n_treatments) {
-      treatment_name <- treatment_names[i_treatment]
-      
-      cost_success <- input_parameters[, paste0("cost_primary_success_", treatment_name)]
-      cost_unsuccess <- input_parameters[, paste0("cost_primary_unsuccess_", treatment_name)]
-      
-      # State <2 years
-      p_failure <- 1 - exp(-exp(input_parameters[, paste0("log_rate_1st_revision_<2", treatment_name)]))
-      p_success <- 1 - p_failure
-      
-      primary_costs[ , i_treatment] <- 
-        p_success * cost_success + p_failure * cost_unsuccess
-}
+  for(treatment_name in treatment_names) {
+    primary_costs[ , treatment_name] <- input_parameters[, paste0("cost_primary_", treatment_name)]
+  }
   
   # Build an array to store the cohort vector at each cycle
   # Store the cohort vectors as a data frame with one row for each cycle, implant and sample
@@ -85,10 +88,9 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
   
   
   # Assume everyone starts in the post_thr state
-  primary_mortality=rep(abs(rnorm(n_samples, mean = as.numeric(mortality[which(grepl(paste0(ini_age," ", gender),mortality$Primary)),"estimate...3"]), 
-                              sd = (as.numeric(mortality[which(grepl(paste0(ini_age," ", gender),mortality$Primary)),"95%CI high...6"])-as.numeric(mortality[which(grepl(paste0(ini_age," ", gender),mortality$Primary)),"95%CI low...5"])/2*1.96))), each =n_treatments)
-  cohort_vectors[cohort_vectors$cycle == 1, "State Post THR <2 years"] <- 1-first_mortality
-  cohort_vectors[cohort_vectors$cycle == 1, "State Death"] <- first_mortality
+  cohort_vectors[cohort_vectors$cycle == 1, "State Post THR <2 years"] <- 1-primary_death_prob
+  cohort_vectors[cohort_vectors$cycle == 1, "State Death"] <- primary_death_prob
+  
   # All other proportions start at zero by default when setting up data frame
   
   #cohort = as.data.frame(cohort_vectors)
@@ -151,7 +153,7 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
     (rcpp_loop_full(cohort_vectors_in = as.matrix(cohort_vectors), 
                     transition_matrices = as.matrix(transition_matrices_df),
                     n_cycles = n_cycles, n_implants = n_treatments, n_samples = n_samples, n_states = n_states))
-   
+  
   
   lapply(c(1:n_treatments), function(i_treatment){
     # Pre-index to reduce runtime
@@ -169,17 +171,17 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
     
     for(i_sample in 1:n_samples) {
       cohort_vectors_tr_sample <- cohort_vectors[c(0:(n_cycles-1)) * (n_treatments * n_samples) +
-                                                   (1 - 1) * n_samples + i_sample, c(4:(3+n_states))]
+                                                   (i_treatment - 1) * n_samples + i_sample, c(4:(3+n_states))]
       # Use cohort vectors to calculate cycle costs and qalys
       cycle_costs_tr[, i_sample] <- cohort_vectors_tr_sample[,  ] %*% state_costs_tr[i_sample, ]
       cycle_qalys_tr[, i_sample] <- cohort_vectors_tr_sample[,  ] %*% state_qalys_tr[i_sample, ]
       # Sum  and discount to get total costs and qalys
       # Add implant costs to total costs
-      total_costs_tr[i_sample] <- cycle_costs_tr[, i_sample] %*% discount_vector
+      total_costs_tr[i_sample] <- cycle_costs_tr[, i_sample] %*% discount_vector + primary_costs[i_sample, i_treatment]
       total_qalys_tr[i_sample] <- cycle_qalys_tr[, i_sample] %*% discount_vector #%*% multi_factor
     }
     
-  
+    
     
     return(list(total_qalys = total_qalys_tr, total_costs = total_costs_tr))
     
@@ -189,7 +191,7 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
   names(output_list) <- treatment_names 
   
   # Reconvert result to a matrix
-
+  
   
   total_costs <- sapply(treatment_names, function(treatment_name) {total_costs[treatment_name, ] <- output_list[[treatment_name]]$total_costs})
   total_qalys <- sapply(treatment_names, function(treatment_name) {total_qalys[treatment_name, ] <- output_list[[treatment_name]]$total_qalys})
@@ -211,4 +213,3 @@ generate_net_benefit <- function(input_parameters, treatment_names = treatment_n
               "incremental_net_benefit" = incremental_net_benefit,
               "ICER" = ICER))
 }
-

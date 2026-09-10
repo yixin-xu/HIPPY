@@ -24,22 +24,23 @@ generate_state_costs<-function(input_parameters,
   # and costs of transient events
   
   for(treatment_name in treatment_names) {
-    state_costs[ ,treatment_name , "State Post THR <2 years"] <- input_parameters[ , "cost_1st_revision"] * 
+    state_costs[ ,treatment_name , "State Post THR <2 years"] <- input_parameters[ , "cost_revision"] * 
       (1 - exp(-exp(input_parameters[, paste0("log_rate_1st_revision_<2", treatment_name)])))
-    state_costs[ ,treatment_name , "State Post THR >=2 years < 10 years"] <- input_parameters[ , "cost_1st_revision"] * 
+    state_costs[ ,treatment_name , "State Post THR >=2 years < 10 years"] <- input_parameters[ , "cost_revision"] * 
       (1 - exp(-exp(input_parameters[, paste0("log_rate_1st_revision_2-10", treatment_name)])))
-    state_costs[ ,treatment_name , "State Post THR >=10 years"] <- input_parameters[ , "cost_1st_revision"] * 
+    state_costs[ ,treatment_name , "State Post THR >=10 years"] <- input_parameters[ , "cost_revision"] * 
       (1 - exp(-exp(input_parameters[, paste0("log_rate_1st_revision_>10", treatment_name)])))
     
   }
   
-  state_costs[ , , "State Early revision"] <- input_parameters[ , "cost_2nd_revision"] * (1 - exp(-exp(input_parameters[ , "log_rate_2nd_revision_early"])))
-  state_costs[ , , "State middle revision"] <- input_parameters[ , "cost_2nd_revision"] * (1 - exp(-exp(input_parameters[ , "log_rate_2nd_revision_middle"])))
-  state_costs[ , , "State late revision"] <- input_parameters[ , "cost_2nd_revision"] * (1 - exp(-exp(input_parameters[ , "log_rate_2nd_revision_late"])))
-  state_costs[ , , "State second revision"] <- input_parameters[ , "cost_2nd_revision"] * (1 - exp(-exp(input_parameters[ , "log_rate_higher_revision"])))
+  state_costs[ , , "State Early revision"] <- input_parameters[ , "cost_rerevision"] * (1 - exp(-exp(input_parameters[ , "log_rate_2nd_revision_early"])))
+  state_costs[ , , "State middle revision"] <- input_parameters[ , "cost_rerevision"] * (1 - exp(-exp(input_parameters[ , "log_rate_2nd_revision_middle"])))
+  state_costs[ , , "State late revision"] <- input_parameters[ , "cost_rerevision"] * (1 - exp(-exp(input_parameters[ , "log_rate_2nd_revision_late"])))
+  state_costs[ , , "State second revision"] <- input_parameters[ , "cost_rerevision"] * (1 - exp(-exp(input_parameters[ , "log_rate_higher_revision"])))
   
   
   # End loop over treatments
   
   return(state_costs)
 } # End function
+

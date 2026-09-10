@@ -23,9 +23,9 @@ generate_transition_matrices <- function(input_parameters,
                                dimnames = list(NULL, treatment_names, NULL, state_names, state_names))
   
   
-  lifetime <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "UK_lifetables")
-  primary_mortality_90d_raw <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "primary_mortality")
-  revision_mortality_90d_raw <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "revision_mortality")
+  lifetime <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "UK_lifetables")
+  primary_mortality_90d_raw <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "primary_mortality")
+  revision_mortality_90d_raw <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "revision_mortality")
   primary_mortality_row_index <- which(primary_mortality_90d_raw[, "age"] == ini_age & primary_mortality_90d_raw[, "gender"] == gender)
   revision_mortality_row_index <- which(revision_mortality_90d_raw[, "age"] == ini_age)
   

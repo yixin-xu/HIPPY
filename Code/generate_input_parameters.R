@@ -25,16 +25,16 @@ generate_input_parameters <- function(n_samples, treatment_names = treatment_nam
   
   
   # data: female 55-64 years old group
-  lifetables <- read_excel(paste0(data_directory, "/KNIPS Main input data.xlsx"), sheet = "uk_lifetables")
-  lograte_revision <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "revision_log_rate")
-  primary_costs <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "primary_unsuccess_costs")
-  revision_costs <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "revision_unsuccess_costs")
-  rerevision_costs <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "rerevision_unsuccess_costs")
+  lifetables <- read_excel("Data/KNIPS Main input data.xlsx", sheet = "uk_lifetables")
+  lograte_revision <- read_excel("Data//cohort_model_inputs.xlsx", sheet = "revision_log_rate")
+  primary_costs <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "primary_unsuccess_costs")
+  revision_costs <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "revision_unsuccess_costs")
+  rerevision_costs <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "rerevision_unsuccess_costs")
   
-  utilities_primary <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "utilities_primary")
-  utilities_revision <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "utilities_revision")
-  un_utilities <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "utilities_unadjusted")
-  log_rate_1st_revision <- read_excel(paste0(data_directory,"/", paste0(gender, "-", initial_age, "-", "rate.xlsx")))
+  utilities_primary <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "utilities_primary")
+  utilities_revision <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "utilities_revision")
+  un_utilities <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "utilities_unadjusted")
+  log_rate_1st_revision <- read_excel(paste0("Data/",gender, "-", initial_age, "-", "rate.xlsx"))
   
   
   # Impute implants to be the average over all implants

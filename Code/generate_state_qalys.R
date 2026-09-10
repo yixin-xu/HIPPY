@@ -15,8 +15,8 @@ generate_state_qalys <- function(input_parameters,
   n_samples <- dim(input_parameters)[1]
   n_states <- length(state_names)
   
-  utilities_primary <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "utilities_primary")
-  utilities_revision <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "utilities_revision")
+  utilities_primary <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "utilities_primary")
+  utilities_revision <- read_excel("Data/cohort_model_inputs.xlsx", sheet = "utilities_revision")
   
   #un_utilities <- read_excel(paste0(data_directory, "/cohort_model_inputs.xlsx"), sheet = "utilities_unadjusted")
   
